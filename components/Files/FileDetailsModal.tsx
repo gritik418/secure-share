@@ -8,6 +8,7 @@ import {
 } from "@/lib/utils/file.utils";
 import { Calendar, Copy, Link2, Mail, Shield, UserPlus, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 interface FileDetailsModalProps {
   file: FileInterface | null;
@@ -36,6 +37,14 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCopyLink = async (accessLink: string) => {
+    if (!accessLink) return;
+
+    await navigator.clipboard.writeText(accessLink);
+
+    toast.success("Link copied to clipboard.");
   };
 
   return (
@@ -236,32 +245,35 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
                   </>
                 )}
               </div>
-            ) : (
-              <div className="rounded-xl border border-border bg-white/2 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <Link2 className="h-4 w-4 text-primary-light" />
-                  </div>
+            ) : null}
 
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-white">
-                      Anyone with the link
-                    </p>
-
-                    <p className="mt-0.5 text-xs text-muted">
-                      Anyone who has the link can access this file.
-                    </p>
-                  </div>
-
-                  <button
-                    className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white"
-                    title="Copy link"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </button>
+            <div className="rounded-xl mt-4 border border-border bg-white/2 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Link2 className="h-4 w-4 text-primary-light" />
                 </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-white">
+                    {file.visibility === "PRIVATE"
+                      ? "Private file"
+                      : "Anyone with the link"}
+                  </p>
+
+                  <p className="mt-0.5 text-xs text-muted">
+                    {file.visibility === "PRIVATE"
+                      ? "Only you and selected members can access."
+                      : "Anyone with the link can access."}
+                  </p>
+                </div>
+                <button
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white"
+                  onClick={() => handleCopyLink(file.accessLink)}
+                  title="Copy link"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>

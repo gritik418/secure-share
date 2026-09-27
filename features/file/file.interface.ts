@@ -29,6 +29,7 @@ export interface FileInterface {
   mimeType: string;
   storagePath: string;
   visibility: FileVisibility;
+  accessLink: string;
   ownerId: string;
   createdAt: string;
   updatedAt: string;
