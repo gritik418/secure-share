@@ -103,17 +103,14 @@ const Register = () => {
           <div className="absolute -right-32 -top-32 h-72 w-72 rounded-full bg-primary/10 blur-[100px] lg:hidden" />
 
           <div className="relative w-full max-w-md">
-            <Logo />
+            <div className="mb-8 lg:hidden">
+              <Logo />
+            </div>
 
             <div className="mb-8">
-              <p className="mb-2 text-3xl font-extrabold text-primary-light">
-                Get started ✨
-              </p>
-
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
                 Create your account
               </h1>
-
               <p className="mt-3 text-sm leading-6 text-muted">
                 Set up your secure space for sharing files.
               </p>
@@ -123,7 +120,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="name"
-                  className="mb-2 block text-sm font-medium"
+                  className="mb-2 block text-sm font-semibold"
                 >
                   Full name
                 </label>
@@ -143,7 +140,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-2 block text-sm font-medium"
+                  className="mb-2 block text-sm font-semibold"
                 >
                   Email address
                 </label>
@@ -163,7 +160,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="password"
-                  className="mb-2 block text-sm font-medium"
+                  className="mb-2 block text-sm font-semibold"
                 >
                   Password
                 </label>
@@ -195,7 +192,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="confirmPassword"
-                  className="mb-2 block text-sm font-medium"
+                  className="mb-2 block text-sm font-semibold"
                 >
                   Confirm password
                 </label>

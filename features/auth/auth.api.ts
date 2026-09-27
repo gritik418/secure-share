@@ -1,5 +1,5 @@
 import baseApi from "@/store/api/base-api";
-import { LoginResponse } from "./auth.interface";
+import { GetMeResponse, LoginResponse } from "./auth.interface";
 import { LoginDto } from "./schemas/login.schema";
 
 const authApi = baseApi.injectEndpoints({
@@ -9,12 +9,17 @@ const authApi = baseApi.injectEndpoints({
         url: "/auth/login",
         method: "POST",
         body: data,
-        credentials: "include",
+      }),
+    }),
+    getMe: builder.query<GetMeResponse, void>({
+      query: () => ({
+        url: "/auth/me",
+        method: "GET",
       }),
     }),
   }),
 });
 
-export const { useLoginMutation } = authApi;
+export const { useLoginMutation, useGetMeQuery } = authApi;
 
 export default authApi;
