@@ -17,12 +17,12 @@ const ProfileMenu = ({ name, email, initials }: ProfileMenuProps) => {
         className="flex items-center gap-2 rounded-xl border border-border bg-surface px-2 py-1.5 transition hover:border-white/15"
       >
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-xs font-semibold text-primary-light">
-          RG
+          {initials}
         </div>
 
         <div className="hidden text-left sm:block">
-          <p className="text-xs font-medium text-white">Ritik Gupta</p>
-          <p className="text-[10px] text-muted">Personal</p>
+          <p className="text-xs font-medium text-white">{name}</p>
+          <p className="text-[10px] text-muted">{email}</p>
         </div>
 
         <ChevronDown
@@ -35,8 +35,8 @@ const ProfileMenu = ({ name, email, initials }: ProfileMenuProps) => {
       {open && (
         <div className="absolute right-0 top-12 w-52 overflow-hidden rounded-xl border border-border bg-surface/95 p-1.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
           <div className="border-b border-border px-3 py-2.5">
-            <p className="text-sm font-medium">Ritik Gupta</p>
-            <p className="truncate text-xs text-muted">ritik@example.com</p>
+            <p className="text-sm font-medium">{name}</p>
+            <p className="truncate text-xs text-muted">{email}</p>
           </div>
 
           <div className="py-1">

@@ -52,7 +52,7 @@ const Navbar = () => {
 
           <ProfileMenu
             name="Ritik Gupta"
-            email="[EMAIL_ADDRESS]"
+            email="ritik@gmail.com"
             initials="RG"
           />
         </div>
