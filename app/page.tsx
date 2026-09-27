@@ -11,7 +11,6 @@ import {
   FileArchive,
   FileImage,
   FileText,
-  MoreHorizontal,
   Plus,
   Share2,
   UploadCloud,
