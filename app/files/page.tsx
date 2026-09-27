@@ -1,82 +1,27 @@
 "use client";
 
+import FileDetailsModal from "@/components/Files/FileDetailsModal";
+import MyFileItem from "@/components/Files/MyFileItem";
 import Navbar from "@/components/Navbar/Navbar";
 import { useGetMyFilesQuery } from "@/features/file/file.api";
-import { FileVisibility } from "@/features/file/file.interface";
+import { FileInterface, FileVisibility } from "@/features/file/file.interface";
 import {
   ChevronLeft,
   ChevronRight,
-  Download,
   File,
-  FileArchive,
-  FileAudio,
-  FileImage,
   FileText,
-  FileVideo,
   Search,
-  Share2,
-  Shield,
-  Trash2,
   Upload,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
-const getFileIcon = (mimeType: string) => {
-  if (mimeType.startsWith("image/")) return FileImage;
-
-  if (mimeType.startsWith("video/")) return FileVideo;
-
-  if (mimeType.startsWith("audio/")) return FileAudio;
-
-  if (
-    mimeType.includes("zip") ||
-    mimeType.includes("rar") ||
-    mimeType.includes("7z") ||
-    mimeType.includes("tar")
-  ) {
-    return FileArchive;
-  }
-
-  if (
-    mimeType.includes("pdf") ||
-    mimeType.includes("text") ||
-    mimeType.includes("document") ||
-    mimeType.includes("word")
-  ) {
-    return FileText;
-  }
-
-  return File;
-};
-
-const formatFileSize = (size: string) => {
-  const bytes = Number(size);
-
-  if (!bytes) return "0 B";
-
-  const units = ["B", "KB", "MB", "GB", "TB"];
-
-  const index = Math.floor(Math.log(bytes) / Math.log(1024));
-
-  return `${(bytes / Math.pow(1024, index)).toFixed(
-    index === 0 ? 0 : 1,
-  )} ${units[index]}`;
-};
-
-const formatDate = (date: string) => {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(date));
-};
-
 const MyFilesPage = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFile, setSelectedFile] = useState<FileInterface | null>(null);
 
   const [visibility, setVisibility] = useState<"ALL" | FileVisibility>("ALL");
 
@@ -148,43 +93,7 @@ const MyFilesPage = () => {
     }
   };
 
-  const handleDownload = async (fileId: string) => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/file/${fileId}?download=true`,
-        {
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) {
-        const result = await response.json().catch(() => null);
-
-        throw new Error(result?.message || "Failed to download file.");
-      }
-
-      const blob = await response.blob();
-
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = "";
-
-      document.body.appendChild(link);
-
-      link.click();
-
-      link.remove();
-
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to download file.",
-      );
-    }
-  };
+  const handleDownload = async (fileId: string) => {};
 
   const showLoading = isLoading || isFetching;
 
@@ -323,97 +232,41 @@ const MyFilesPage = () => {
                 )}
               </div>
             ) : (
-              files.map((file) => {
-                const FileIcon = getFileIcon(file.mimeType);
-
-                const isDeleting = deletingId === file.id;
-
-                return (
-                  <div
-                    key={file.id}
-                    className="group grid grid-cols-1 gap-3 border-b border-border px-5 py-4 transition last:border-0 hover:bg-white/2.5 md:grid-cols-[minmax(0,2fr)_160px_120px_96px] md:items-center md:gap-0"
-                  >
-                    <div className="flex min-w-0 items-center gap-4">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-white/5">
-                        <FileIcon className="h-5 w-5 text-primary-light" />
+              <>
+                <div className="divide-y divide-border">
+                  {files.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                        <FileText className="h-7 w-7 text-primary-light" />
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <p
-                          title={file.originalName}
-                          className="truncate text-sm font-medium text-white"
-                        >
-                          {file.originalName}
-                        </p>
+                      <h3 className="mt-4 text-sm font-semibold text-white">
+                        No files yet
+                      </h3>
 
-                        <p className="mt-1 text-xs text-muted">
-                          {formatFileSize(file.size.toString())} ·{" "}
-                          {file.mimeType || "Unknown type"}
-                        </p>
-                      </div>
+                      <p className="mt-1 text-xs text-muted">
+                        Upload your first file to get started.
+                      </p>
                     </div>
+                  ) : (
+                    files.map((file) => (
+                      <MyFileItem
+                        key={file.id}
+                        file={file}
+                        deletingId={deletingId}
+                        onDownload={handleDownload}
+                        onDelete={handleDelete}
+                        onClick={setSelectedFile}
+                      />
+                    ))
+                  )}
+                </div>
 
-                    <div className="hidden items-center md:flex">
-                      {file.visibility === "PRIVATE" ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/5 px-2.5 py-1 text-xs font-medium text-muted">
-                          <Shield className="h-3 w-3" />
-                          Private
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary-light">
-                          <Share2 className="h-3 w-3" />
-                          Link access
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="hidden text-sm text-muted md:block">
-                      {formatDate(file.createdAt)}
-                    </div>
-
-                    <div className="hidden items-center justify-end gap-1 md:flex">
-                      <button
-                        onClick={() => handleDownload(file.id)}
-                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white"
-                        title="Download"
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
-
-                      <button
-                        onClick={() => handleDelete(file.id)}
-                        disabled={isDeleting}
-                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
-                        title="Delete"
-                      >
-                        {isDeleting ? (
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-transparent" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-2 md:hidden">
-                      {file.visibility === "PRIVATE" ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/5 px-2.5 py-1 text-xs font-medium text-muted">
-                          <Shield className="h-3 w-3" />
-                          Private
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary-light">
-                          <Share2 className="h-3 w-3" />
-                          Link access
-                        </span>
-                      )}
-
-                      <span className="text-xs text-muted">
-                        {formatDate(file.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
+                <FileDetailsModal
+                  file={selectedFile}
+                  onClose={() => setSelectedFile(null)}
+                />
+              </>
             )}
 
             {!showLoading && pagination && pagination.total > 0 && (
