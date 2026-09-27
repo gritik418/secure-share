@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Upload,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 const Login = () => {
@@ -190,12 +191,12 @@ const Login = () => {
 
             <p className="text-center text-sm text-muted">
               Don't have an account?{" "}
-              <button
-                type="button"
+              <Link
+                href={"/register"}
                 className="font-semibold text-primary-light transition hover:text-white"
               >
                 Create account
-              </button>
+              </Link>
             </p>
 
             <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted/70">
