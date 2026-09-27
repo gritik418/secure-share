@@ -6,7 +6,7 @@ import {
   formatFileSize,
   getFileIcon,
 } from "@/lib/utils/file.utils";
-import { Download, Loader2, Share2, Shield, Trash2 } from "lucide-react";
+import { Download, Eye, Loader2, Share2, Shield, Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import { toast } from "react-toastify";
@@ -26,6 +26,7 @@ const MyFileItem = ({
 }: MyFileItemProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [isPreviewing, setIsPreviewing] = useState<boolean>(false);
 
   const downloadFile = async (fileId: string) => {
     const response = await fetch(
@@ -43,6 +44,63 @@ const MyFileItem = ({
     }
 
     return response.blob();
+  };
+
+  const viewFile = async (fileId: string): Promise<Blob | void> => {
+    try {
+      setIsPreviewing(true);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/file/${fileId}/view`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+
+        toast.error(error?.message || "Failed to open file.");
+      }
+
+      return response.blob();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to open file.",
+      );
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
+
+  const handleView = async (file: MyFileInterface) => {
+    const newTab = window.open("", "_blank");
+
+    if (!newTab) {
+      toast.error("Please allow popups to view the file.");
+      return;
+    }
+
+    try {
+      const blob = await viewFile(file.id);
+
+      if (!blob) return;
+
+      const url = window.URL.createObjectURL(blob);
+
+      newTab.location.href = url;
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 60000);
+    } catch (error) {
+      newTab.close();
+
+      toast.error(
+        error instanceof Error ? error.message : "Failed to open file.",
+      );
+    }
   };
 
   const handleDownload = async () => {
@@ -127,6 +185,18 @@ const MyFileItem = ({
           className="hidden items-center justify-end gap-1 md:flex"
           onClick={(e) => e.stopPropagation()}
         >
+          <button
+            onClick={() => handleView(file)}
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white"
+            title="View File"
+          >
+            {isPreviewing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+
           <button
             onClick={handleDownload}
             className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white"
