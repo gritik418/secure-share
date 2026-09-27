@@ -40,10 +40,13 @@ const Navbar = () => {
         <div className="flex items-center gap-2.5">
           {user && user.id ? (
             <>
-              <button className="hidden h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/15 transition hover:bg-primary-dark sm:flex">
+              <Link
+                href={"/upload"}
+                className="hidden h-9 items-center gap-2 rounded-lg bg-primary px-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/15 transition hover:bg-primary-dark sm:flex"
+              >
                 <CloudUpload className="h-4 w-4" />
                 Upload
-              </button>
+              </Link>
 
               <ProfileMenu
                 name={user?.name || "User"}
