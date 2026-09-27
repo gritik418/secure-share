@@ -1,5 +1,6 @@
 "use client";
 
+import Logo from "@/components/Logo/Logo";
 import {
   ArrowRight,
   Check,
@@ -8,7 +9,6 @@ import {
   FileLock2,
   LockKeyhole,
   Mail,
-  ShieldCheck,
   User,
 } from "lucide-react";
 import Link from "next/link";
@@ -25,15 +25,7 @@ const Register = () => {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(99,102,241,0.18),transparent_35%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.08),transparent_35%)]" />
 
           <div className="relative z-10 flex w-full flex-col justify-between p-12 xl:p-16">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
-                <ShieldCheck className="h-5 w-5 text-primary-light" />
-              </div>
-
-              <span className="text-lg font-semibold tracking-tight">
-                SecureShare
-              </span>
-            </div>
+            <Logo />
 
             <div className="relative max-w-lg">
               <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-primary/10 blur-[100px]" />
@@ -111,13 +103,7 @@ const Register = () => {
           <div className="absolute -right-32 -top-32 h-72 w-72 rounded-full bg-primary/10 blur-[100px] lg:hidden" />
 
           <div className="relative w-full max-w-md">
-            <div className="mb-8 lg:hidden">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
-                <ShieldCheck className="h-5 w-5 text-primary-light" />
-              </div>
-
-              <h1 className="text-2xl font-bold">SecureShare</h1>
-            </div>
+            <Logo />
 
             <div className="mb-8">
               <p className="mb-2 text-3xl font-extrabold text-primary-light">

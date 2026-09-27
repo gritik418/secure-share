@@ -1,20 +1,60 @@
 "use client";
 
+import Logo from "@/components/Logo/Logo";
+import { useLoginMutation } from "@/features/auth/auth.api";
+import LoginSchema, { LoginDto } from "@/features/auth/schemas/login.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
   Eye,
   EyeOff,
   FileLock2,
+  LoaderCircle,
   LockKeyhole,
   Mail,
-  ShieldCheck,
   Upload,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [login] = useLoginMutation();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginDto>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    resolver: zodResolver(LoginSchema),
+  });
+
+  const handleLogin = async (data: LoginDto) => {
+    try {
+      const result = await login(data).unwrap();
+
+      if (!result.success) {
+        toast.error(result.message);
+      } else {
+        toast.success(result.message || "Logged in successfully.");
+      }
+    } catch (error: any) {
+      if (error.status === "FETCH_ERROR") {
+        toast.error(
+          "Unable to connect to the server. Please make sure the server is running.",
+        );
+        return;
+      }
+
+      toast.error(error?.data?.message || "Something went wrong.");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-background text-text">
@@ -23,15 +63,7 @@ const Login = () => {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.18),transparent_35%),radial-gradient(circle_at_80%_80%,rgba(129,140,248,0.08),transparent_35%)]" />
 
           <div className="relative z-10 flex w-full flex-col justify-between p-12 xl:p-16">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
-                <ShieldCheck className="h-5 w-5 text-primary-light" />
-              </div>
-
-              <span className="text-lg font-semibold tracking-tight">
-                SecureShare
-              </span>
-            </div>
+            <Logo />
 
             <div className="relative max-w-lg">
               <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-primary/10 blur-[100px]" />
@@ -99,11 +131,7 @@ const Login = () => {
 
           <div className="relative w-full max-w-md">
             <div className="mb-8 lg:hidden">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/30">
-                <ShieldCheck className="h-5 w-5 text-primary-light" />
-              </div>
-
-              <h1 className="text-2xl font-bold">SecureShare</h1>
+              <Logo />
             </div>
 
             <div className="mb-8">
@@ -120,11 +148,11 @@ const Login = () => {
               </p>
             </div>
 
-            <form className="space-y-5">
+            <form onSubmit={handleSubmit(handleLogin)} className="space-y-5">
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-2 block text-sm font-medium"
+                  className="mb-2 block text-sm font-semibold"
                 >
                   Email address
                 </label>
@@ -133,17 +161,23 @@ const Login = () => {
                   <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted transition group-focus-within:text-primary-light" />
 
                   <input
+                    {...register("email")}
                     id="email"
                     type="email"
                     placeholder="you@example.com"
                     className="h-13 w-full rounded-xl border border-border bg-surface px-11 text-sm outline-none transition placeholder:text-muted/60 hover:border-white/15 focus:border-primary/60 focus:bg-surface-2 focus:ring-4 focus:ring-primary/10"
                   />
+                  {errors.email && (
+                    <p className="text-xs mt-1 text-red-500">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <label htmlFor="password" className="text-sm font-medium">
+                  <label htmlFor="password" className="text-sm font-semibold">
                     Password
                   </label>
                 </div>
@@ -152,6 +186,7 @@ const Login = () => {
                   <LockKeyhole className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted transition group-focus-within:text-primary-light" />
 
                   <input
+                    {...register("password")}
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
@@ -161,7 +196,7 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted transition hover:text-white"
+                    className="absolute cursor-pointer right-4 top-1/2 -translate-y-1/2 text-muted transition hover:text-white"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -170,14 +205,26 @@ const Login = () => {
                     )}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-xs mt-1 text-red-500">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               <button
                 type="submit"
-                className="group flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold shadow-lg shadow-primary/20 transition hover:bg-primary-dark hover:shadow-primary/30 active:scale-[0.99]"
+                disabled={isSubmitting}
+                className="group cursor-pointer flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold shadow-lg shadow-primary/20 transition hover:bg-primary-dark hover:shadow-primary/30 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Continue
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                {isSubmitting ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    Continue
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </>
+                )}
               </button>
             </form>
 
