@@ -2,6 +2,8 @@
 
 import Navbar from "@/components/Navbar/Navbar";
 import { selectUser } from "@/features/auth/auth.slice";
+import { useGetMyFilesQuery } from "@/features/file/file.api";
+import { type FileInterface } from "@/features/file/file.interface";
 import {
   ArrowRight,
   Download,
@@ -17,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 const files = [
@@ -52,10 +55,11 @@ const files = [
 
 const Home = () => {
   const user = useSelector(selectUser);
-
-  if (!user) {
-    redirect("/login");
-  }
+  const [myFiles, setMyFiles] = useState<FileInterface[]>([]);
+  const { data, isLoading } = useGetMyFilesQuery({
+    limit: 5,
+    page: 1,
+  });
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -78,6 +82,29 @@ const Home = () => {
       day: "numeric",
     });
   };
+
+  const formatDate = (date: string) => {
+    const dateObj = new Date(date);
+    return dateObj.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    if (data?.success) {
+      setMyFiles(data.data.files);
+    }
+  }, [data]);
+
+  if (!user) {
+    redirect("/login");
+  }
 
   return (
     <>
@@ -153,19 +180,22 @@ const Home = () => {
                   </p>
                 </div>
 
-                <button className="flex items-center gap-1 text-xs font-medium text-primary-light transition hover:text-white">
+                <Link
+                  href="/files"
+                  className="flex items-center gap-1 text-xs font-medium text-primary-light transition hover:text-white"
+                >
                   View all
                   <ArrowRight className="h-3.5 w-3.5" />
-                </button>
+                </Link>
               </div>
 
               <div className="divide-y divide-border">
-                {files.map((file) => {
-                  const Icon = file.icon;
+                {myFiles.map((file: FileInterface) => {
+                  const Icon = file.mimeType === "PDF" ? FileText : FileImage;
 
                   return (
                     <div
-                      key={file.name}
+                      key={file.id}
                       className="group flex items-center gap-4 px-5 py-4 transition hover:bg-white/2.5"
                     >
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
@@ -174,21 +204,17 @@ const Home = () => {
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">
-                          {file.name}
+                          {file.originalName}
                         </p>
 
                         <p className="mt-1 text-xs text-muted">
-                          {file.type} · {file.size}
+                          {file.mimeType} · {file.size}
                         </p>
                       </div>
 
                       <p className="hidden text-xs text-muted md:block">
-                        {file.date}
+                        {formatDate(file.createdAt)}
                       </p>
-
-                      <button className="flex h-8 w-8 items-center justify-center rounded-lg text-muted opacity-0 transition hover:bg-white/5 hover:text-white group-hover:opacity-100">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
                     </div>
                   );
                 })}
