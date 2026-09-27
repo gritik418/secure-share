@@ -8,8 +8,8 @@ import {
   useGetMyFilesQuery,
 } from "@/features/file/file.api";
 import {
-  MyFileInterface,
   FileVisibility,
+  MyFileInterface,
 } from "@/features/file/file.interface";
 import {
   ChevronLeft,
@@ -82,8 +82,6 @@ const MyFilesPage = () => {
       setDeletingId(null);
     }
   };
-
-  const handleDownload = async (fileId: string) => {};
 
   const showLoading = isLoading || isFetching;
 
@@ -250,7 +248,6 @@ const MyFilesPage = () => {
                         key={file.id}
                         file={file}
                         deletingId={deletingId}
-                        onDownload={handleDownload}
                         onDelete={handleDelete}
                         onClick={setSelectedFile}
                       />

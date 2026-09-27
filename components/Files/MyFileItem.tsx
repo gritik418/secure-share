@@ -6,14 +6,14 @@ import {
   formatFileSize,
   getFileIcon,
 } from "@/lib/utils/file.utils";
-import { Download, Share2, Shield, Trash2 } from "lucide-react";
+import { Download, Loader2, Share2, Shield, Trash2 } from "lucide-react";
 import { useState } from "react";
 import DeleteConfirmModal from "./DeleteConfirmModal";
+import { toast } from "react-toastify";
 
 interface MyFileItemProps {
   file: MyFileInterface;
   deletingId: string | null;
-  onDownload: (id: string) => void;
   onDelete: (id: string) => void;
   onClick: (file: MyFileInterface) => void;
 }
@@ -21,11 +21,55 @@ interface MyFileItemProps {
 const MyFileItem = ({
   file,
   deletingId,
-  onDownload,
   onDelete,
   onClick,
 }: MyFileItemProps) => {
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+
+  const downloadFile = async (fileId: string) => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/file/${fileId}/download`,
+      {
+        method: "GET",
+        credentials: "include",
+      },
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+
+      throw new Error(error?.message || "Failed to download file.");
+    }
+
+    return response.blob();
+  };
+
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+
+      const blob = await downloadFile(file.id);
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = file.originalName;
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to download file.",
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const FileIcon = getFileIcon(file.mimeType);
   const isDeleting = deletingId === file.id;
@@ -84,11 +128,16 @@ const MyFileItem = ({
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            onClick={() => onDownload(file.id)}
+            onClick={handleDownload}
             className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white"
             title="Download"
+            disabled={isDownloading}
           >
-            <Download className="h-4 w-4" />
+            {isDownloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
           </button>
 
           <button
