@@ -49,7 +49,7 @@ const MyFilesPage = () => {
     return () => clearTimeout(timeout);
   }, [search]);
 
-  const { data, isLoading, isFetching } = useGetMyFilesQuery({
+  const { data, isLoading, isFetching, refetch } = useGetMyFilesQuery({
     limit,
     page,
     search: searchQuery,
@@ -257,6 +257,7 @@ const MyFilesPage = () => {
 
                 <FileDetailsModal
                   file={selectedFile}
+                  refetch={refetch}
                   onClose={() => setSelectedFile(null)}
                 />
               </>

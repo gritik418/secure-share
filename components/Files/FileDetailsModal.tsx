@@ -1,34 +1,46 @@
 "use client";
 
-import { useAddFileMemberMutation } from "@/features/file/file.api";
+import {
+  useAddFileMemberMutation,
+  useRemoveFileMemberMutation,
+} from "@/features/file/file.api";
 import { MyFileInterface } from "@/features/file/file.interface";
 import {
   formatDate,
   formatFileSize,
   getFileIcon,
 } from "@/lib/utils/file.utils";
-import { Calendar, Copy, Link2, Mail, Shield, UserPlus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Calendar,
+  Copy,
+  Link2,
+  Loader2,
+  Mail,
+  Shield,
+  UserPlus,
+  X,
+} from "lucide-react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 
 interface FileDetailsModalProps {
   file: MyFileInterface | null;
   onClose: () => void;
+  refetch: () => void;
 }
 
-const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
+const FileDetailsModal = ({
+  file,
+  onClose,
+  refetch,
+}: FileDetailsModalProps) => {
   const [addMember] = useAddFileMemberMutation();
+  const [removeMember] = useRemoveFileMemberMutation();
+
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [sharedEmails, setSharedEmails] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (file) {
-      setSharedEmails(file.shares?.map((share) => share.email) || []);
-    }
-  }, [file?.id]);
+  const [removingEmail, setRemovingEmail] = useState<string | null>(null);
 
   if (!file) return null;
 
@@ -48,10 +60,7 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
       }).unwrap();
 
       if (response.success) {
-        setSharedEmails((prev) =>
-          prev.includes(trimmedEmail) ? prev : [...prev, trimmedEmail],
-        );
-
+        refetch();
         toast.success(response.message || "User added to file successfully.");
 
         setEmail("");
@@ -66,13 +75,47 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
     }
   };
 
+  const handleRemoveMember = async (email: string) => {
+    try {
+      setRemovingEmail(email);
+
+      const response = await removeMember({
+        fileId: file.id,
+        email,
+      }).unwrap();
+
+      if (response.success) {
+        refetch();
+        toast.success(response.message || "Member removed successfully.");
+      } else {
+        toast.error(response.message || "Failed to remove member.");
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Something went wrong");
+    } finally {
+      setRemovingEmail(null);
+    }
+  };
+
   const handleCopyLink = async (accessLink: string) => {
     if (!accessLink) return;
 
-    await navigator.clipboard.writeText(accessLink);
-
-    toast.success("Link copied to clipboard.");
+    try {
+      await navigator.clipboard.writeText(accessLink);
+      toast.success("Link copied to clipboard.");
+    } catch {
+      toast.error("Failed to copy link.");
+    }
   };
+
+  const handleCloseAddMember = () => {
+    if (isSubmitting) return;
+
+    setIsAddingMember(false);
+    setEmail("");
+  };
+
+  const members = file.shares || [];
 
   return (
     <div
@@ -161,7 +204,7 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
               )}
             </div>
 
-            {file.visibility === "PRIVATE" ? (
+            {file.visibility === "PRIVATE" && (
               <div className="rounded-xl border border-border bg-white/2 p-4">
                 {isAddingMember ? (
                   <div>
@@ -195,8 +238,7 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
                             }
 
                             if (e.key === "Escape") {
-                              setIsAddingMember(false);
-                              setEmail("");
+                              handleCloseAddMember();
                             }
                           }}
                           autoFocus
@@ -215,11 +257,9 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
                     </div>
 
                     <button
-                      onClick={() => {
-                        setIsAddingMember(false);
-                        setEmail("");
-                      }}
-                      className="mt-3 place-self-center block bg-gray-300/10 p-2 rounded-md cursor-pointer text-xs text-muted font-semibold transition hover:text-white"
+                      onClick={handleCloseAddMember}
+                      disabled={isSubmitting}
+                      className="mt-3 block cursor-pointer place-self-center rounded-md bg-gray-300/10 p-2 text-xs font-semibold text-muted transition hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -257,39 +297,56 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
                             <p className="text-xs font-medium text-white">
                               Owner
                             </p>
+
                             <p className="text-[11px] text-muted">
                               Full access
                             </p>
                           </div>
                         </div>
 
-                        {sharedEmails.length > 0 && (
-                          <div className="max-h-24 space-y-2 overflow-y-auto">
-                            {sharedEmails.map((email) => (
+                        {members.length > 0 && (
+                          <div className="max-h-32 space-y-2 overflow-y-auto">
+                            {members.map((share) => (
                               <div
-                                key={email}
+                                key={share.email}
                                 className="flex items-center gap-3"
                               >
                                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary-light">
-                                  {email.charAt(0).toUpperCase()}
+                                  {share.email.charAt(0).toUpperCase()}
                                 </div>
 
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                   <p className="truncate text-xs font-medium text-white">
-                                    {email}
+                                    {share.email}
                                   </p>
 
                                   <p className="text-[11px] text-muted">
                                     View only
                                   </p>
                                 </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleRemoveMember(share.email)
+                                  }
+                                  disabled={removingEmail === share.email}
+                                  className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                                  title="Remove member"
+                                >
+                                  {removingEmail === share.email ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : (
+                                    <X className="h-3.5 w-3.5" />
+                                  )}
+                                </button>
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
 
-                      {sharedEmails.length === 0 && (
+                      {members.length === 0 && (
                         <p className="mt-3 text-center text-xs text-muted">
                           No other members have access yet.
                         </p>
@@ -298,13 +355,14 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
                   </>
                 )}
               </div>
-            ) : null}
+            )}
 
-            <div className="rounded-xl mt-4 border border-border bg-white/2 p-4">
+            <div className="mt-4 rounded-xl border border-border bg-white/2 p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
                   <Link2 className="h-4 w-4 text-primary-light" />
                 </div>
+
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-white">
                     {file.visibility === "PRIVATE"
@@ -318,6 +376,7 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
                       : "Anyone with the link can access."}
                   </p>
                 </div>
+
                 <button
                   className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white"
                   onClick={() => handleCopyLink(file.accessLink)}
@@ -349,6 +408,7 @@ function InfoItem({
 
       <div className="mt-1 flex items-center gap-1.5">
         {icon && <span className="text-muted">{icon}</span>}
+
         <p className="truncate text-xs font-medium text-white">{value}</p>
       </div>
     </div>

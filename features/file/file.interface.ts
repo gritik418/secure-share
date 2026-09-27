@@ -20,7 +20,17 @@ export interface AddFileMemberDto {
   email: string;
 }
 
+export interface RemoveFileMemberDto {
+  fileId: string;
+  email: string;
+}
+
 export interface AddFileMemberResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface RemoveFileMemberResponse {
   success: boolean;
   message: string;
 }

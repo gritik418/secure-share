@@ -5,6 +5,8 @@ import {
   DeleteFileResponse,
   GetFilesDto,
   GetMyFilesResponse,
+  RemoveFileMemberDto,
+  RemoveFileMemberResponse,
 } from "./file.interface";
 
 const fileApi = baseApi.injectEndpoints({
@@ -34,6 +36,17 @@ const fileApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["File"],
     }),
+    removeFileMember: builder.mutation<
+      RemoveFileMemberResponse,
+      RemoveFileMemberDto
+    >({
+      query: ({ fileId, email }: RemoveFileMemberDto) => ({
+        url: `/file/${fileId}/members`,
+        method: "DELETE",
+        body: { email },
+      }),
+      invalidatesTags: ["File"],
+    }),
     deleteFile: builder.mutation<DeleteFileResponse, string>({
       query: (fileId: string) => ({
         url: `/file/${fileId}`,
@@ -48,4 +61,5 @@ export const {
   useGetMyFilesQuery,
   useAddFileMemberMutation,
   useDeleteFileMutation,
+  useRemoveFileMemberMutation,
 } = fileApi;
