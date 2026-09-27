@@ -1,6 +1,6 @@
 "use client";
 
-import { FileInterface } from "@/features/file/file.interface";
+import { MyFileInterface } from "@/features/file/file.interface";
 import {
   formatDate,
   formatFileSize,
@@ -9,11 +9,11 @@ import {
 import { Download, Share2, Shield, Trash2 } from "lucide-react";
 
 interface MyFileItemProps {
-  file: FileInterface;
+  file: MyFileInterface;
   deletingId: string | null;
   onDownload: (id: string) => void;
   onDelete: (id: string) => void;
-  onClick: (file: FileInterface) => void;
+  onClick: (file: MyFileInterface) => void;
 }
 
 const MyFileItem = ({

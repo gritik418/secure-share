@@ -1,9 +1,9 @@
 export type FileVisibility = "PRIVATE" | "ANYONE_WITH_LINK";
 
-export interface GetFilesResponse {
+export interface GetMyFilesResponse {
   success: boolean;
   data: {
-    files: FileInterface[];
+    files: MyFileInterface[];
     pagination: {
       page: number;
       limit: number;
@@ -15,6 +15,16 @@ export interface GetFilesResponse {
   };
 }
 
+export interface AddFileMemberDto {
+  fileId: string;
+  email: string;
+}
+
+export interface AddFileMemberResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface GetFilesDto {
   page?: number;
   limit?: number;
@@ -22,7 +32,7 @@ export interface GetFilesDto {
   visibility?: FileVisibility;
 }
 
-export interface FileInterface {
+export interface MyFileInterface {
   id: string;
   originalName: string;
   size: number;
@@ -33,4 +43,7 @@ export interface FileInterface {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+  shares: {
+    email: string;
+  }[];
 }

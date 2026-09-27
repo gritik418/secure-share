@@ -3,7 +3,8 @@
 import Navbar from "@/components/Navbar/Navbar";
 import { selectUser } from "@/features/auth/auth.slice";
 import { useGetMyFilesQuery } from "@/features/file/file.api";
-import { type FileInterface } from "@/features/file/file.interface";
+import { type MyFileInterface } from "@/features/file/file.interface";
+import { formatDate } from "@/lib/utils/file.utils";
 import {
   ArrowRight,
   Download,
@@ -21,40 +22,9 @@ import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
-const files = [
-  {
-    name: "Project Documentation.pdf",
-    type: "PDF",
-    size: "2.4 MB",
-    date: "Today, 10:42 AM",
-    icon: FileText,
-  },
-  {
-    name: "Dashboard Design.fig",
-    type: "Figma",
-    size: "8.7 MB",
-    date: "Yesterday, 6:20 PM",
-    icon: FileImage,
-  },
-  {
-    name: "Source Code.zip",
-    type: "ZIP",
-    size: "42.1 MB",
-    date: "Sep 25, 2026",
-    icon: FileArchive,
-  },
-  {
-    name: "Requirements.pdf",
-    type: "PDF",
-    size: "1.8 MB",
-    date: "Sep 24, 2026",
-    icon: FileText,
-  },
-];
-
 const Home = () => {
   const user = useSelector(selectUser);
-  const [myFiles, setMyFiles] = useState<FileInterface[]>([]);
+  const [myFiles, setMyFiles] = useState<MyFileInterface[]>([]);
   const { data, isLoading } = useGetMyFilesQuery({
     limit: 5,
     page: 1,
@@ -78,15 +48,6 @@ const Home = () => {
     return new Date().toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
-      day: "numeric",
-    });
-  };
-
-  const formatDate = (date: string) => {
-    const dateObj = new Date(date);
-    return dateObj.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
       day: "numeric",
     });
   };
@@ -203,7 +164,7 @@ const Home = () => {
                     </p>
                   </div>
                 ) : (
-                  myFiles.map((file: FileInterface) => {
+                  myFiles.map((file: MyFileInterface) => {
                     const Icon = file.mimeType === "PDF" ? FileText : FileImage;
 
                     return (

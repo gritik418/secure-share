@@ -4,7 +4,10 @@ import FileDetailsModal from "@/components/Files/FileDetailsModal";
 import MyFileItem from "@/components/Files/MyFileItem";
 import Navbar from "@/components/Navbar/Navbar";
 import { useGetMyFilesQuery } from "@/features/file/file.api";
-import { FileInterface, FileVisibility } from "@/features/file/file.interface";
+import {
+  MyFileInterface,
+  FileVisibility,
+} from "@/features/file/file.interface";
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,11 +24,14 @@ const MyFilesPage = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFile, setSelectedFile] = useState<FileInterface | null>(null);
+  const [selectedFile, setSelectedFile] = useState<MyFileInterface | null>(
+    null,
+  );
 
   const [visibility, setVisibility] = useState<"ALL" | FileVisibility>("ALL");
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [files, setFiles] = useState<MyFileInterface[]>([]);
 
   const limit = 5;
 
@@ -45,7 +51,6 @@ const MyFilesPage = () => {
     visibility: visibility === "ALL" ? undefined : visibility,
   });
 
-  const files = data?.data?.files ?? [];
   const pagination = data?.data?.pagination;
 
   const handleVisibilityChange = (value: "ALL" | FileVisibility) => {
@@ -96,6 +101,12 @@ const MyFilesPage = () => {
   const handleDownload = async (fileId: string) => {};
 
   const showLoading = isLoading || isFetching;
+
+  useEffect(() => {
+    if (data?.success) {
+      setFiles(data.data.files);
+    }
+  }, [data]);
 
   return (
     <>

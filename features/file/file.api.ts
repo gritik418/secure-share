@@ -1,9 +1,14 @@
 import baseApi from "@/store/api/base-api";
-import { GetFilesDto, GetFilesResponse } from "./file.interface";
+import {
+  AddFileMemberDto,
+  AddFileMemberResponse,
+  GetFilesDto,
+  GetMyFilesResponse,
+} from "./file.interface";
 
 const fileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getMyFiles: builder.query<GetFilesResponse, GetFilesDto>({
+    getMyFiles: builder.query<GetMyFilesResponse, GetFilesDto>({
       query: ({ page, limit, search, visibility }: GetFilesDto) => {
         const params: Record<string, string> = {};
 
@@ -18,8 +23,17 @@ const fileApi = baseApi.injectEndpoints({
           params,
         };
       },
+      providesTags: ["FileMember"],
+    }),
+    addFileMember: builder.mutation<AddFileMemberResponse, AddFileMemberDto>({
+      query: ({ fileId, email }: AddFileMemberDto) => ({
+        url: `/file/${fileId}/members`,
+        method: "POST",
+        body: { email },
+      }),
+      invalidatesTags: ["FileMember"],
     }),
   }),
 });
 
-export const { useGetMyFilesQuery } = fileApi;
+export const { useGetMyFilesQuery, useAddFileMemberMutation } = fileApi;

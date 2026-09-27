@@ -1,24 +1,34 @@
 "use client";
 
-import { FileInterface } from "@/features/file/file.interface";
+import { useAddFileMemberMutation } from "@/features/file/file.api";
+import { MyFileInterface } from "@/features/file/file.interface";
 import {
   formatDate,
   formatFileSize,
   getFileIcon,
 } from "@/lib/utils/file.utils";
 import { Calendar, Copy, Link2, Mail, Shield, UserPlus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 interface FileDetailsModalProps {
-  file: FileInterface | null;
+  file: MyFileInterface | null;
   onClose: () => void;
 }
 
 const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
+  const [addMember] = useAddFileMemberMutation();
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [sharedEmails, setSharedEmails] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (file) {
+      setSharedEmails(file.shares?.map((share) => share.email) || []);
+    }
+  }, [file?.id]);
 
   if (!file) return null;
 
@@ -31,9 +41,26 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
 
     try {
       setIsSubmitting(true);
-      //   await onAddMember(trimmedEmail);
-      setEmail("");
-      setIsAddingMember(false);
+
+      const response = await addMember({
+        email: trimmedEmail,
+        fileId: file.id,
+      }).unwrap();
+
+      if (response.success) {
+        setSharedEmails((prev) =>
+          prev.includes(trimmedEmail) ? prev : [...prev, trimmedEmail],
+        );
+
+        toast.success(response.message || "User added to file successfully.");
+
+        setEmail("");
+        setIsAddingMember(false);
+      } else {
+        toast.error(response.message || "Failed to add user to file.");
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
@@ -181,7 +208,7 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
                       <button
                         onClick={handleAddMember}
                         disabled={!email.trim() || isSubmitting}
-                        className="h-10 rounded-lg bg-primary px-4 text-xs font-medium text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="h-10 cursor-pointer rounded-lg bg-primary px-4 text-xs font-medium text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isSubmitting ? "Adding..." : "Add"}
                       </button>
@@ -220,7 +247,7 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
                         Members with access
                       </p>
 
-                      <div className="flex items-center justify-between rounded-lg bg-white/2 px-3 py-2.5">
+                      <div className="flex flex-col gap-3 rounded-lg bg-white/2 px-3 py-2.5">
                         <div className="flex items-center gap-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary-light">
                             You
@@ -230,17 +257,43 @@ const FileDetailsModal = ({ file, onClose }: FileDetailsModalProps) => {
                             <p className="text-xs font-medium text-white">
                               Owner
                             </p>
-
                             <p className="text-[11px] text-muted">
                               Full access
                             </p>
                           </div>
                         </div>
+
+                        {sharedEmails.length > 0 && (
+                          <div className="max-h-24 space-y-2 overflow-y-auto">
+                            {sharedEmails.map((email) => (
+                              <div
+                                key={email}
+                                className="flex items-center gap-3"
+                              >
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary-light">
+                                  {email.charAt(0).toUpperCase()}
+                                </div>
+
+                                <div className="min-w-0">
+                                  <p className="truncate text-xs font-medium text-white">
+                                    {email}
+                                  </p>
+
+                                  <p className="text-[11px] text-muted">
+                                    View only
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
-                      <p className="mt-3 text-center text-xs text-muted">
-                        No other members have access yet.
-                      </p>
+                      {sharedEmails.length === 0 && (
+                        <p className="mt-3 text-center text-xs text-muted">
+                          No other members have access yet.
+                        </p>
+                      )}
                     </div>
                   </>
                 )}
