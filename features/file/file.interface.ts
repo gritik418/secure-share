@@ -47,3 +47,8 @@ export interface MyFileInterface {
     email: string;
   }[];
 }
+
+export interface DeleteFileResponse {
+  success: boolean;
+  message: string;
+}

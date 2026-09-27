@@ -3,7 +3,10 @@
 import FileDetailsModal from "@/components/Files/FileDetailsModal";
 import MyFileItem from "@/components/Files/MyFileItem";
 import Navbar from "@/components/Navbar/Navbar";
-import { useGetMyFilesQuery } from "@/features/file/file.api";
+import {
+  useDeleteFileMutation,
+  useGetMyFilesQuery,
+} from "@/features/file/file.api";
 import {
   MyFileInterface,
   FileVisibility,
@@ -21,6 +24,8 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 const MyFilesPage = () => {
+  const [deleteFile] = useDeleteFileMutation();
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,7 +49,7 @@ const MyFilesPage = () => {
     return () => clearTimeout(timeout);
   }, [search]);
 
-  const { data, isLoading, isFetching, refetch } = useGetMyFilesQuery({
+  const { data, isLoading, isFetching } = useGetMyFilesQuery({
     limit,
     page,
     search: searchQuery,
@@ -59,35 +64,15 @@ const MyFilesPage = () => {
   };
 
   const handleDelete = async (fileId: string) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this file?",
-    );
-
-    if (!confirmed) return;
-
     try {
       setDeletingId(fileId);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/file/${fileId}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
+      const result = await deleteFile(fileId).unwrap();
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to delete file.");
-      }
-
-      toast.success("File deleted successfully.");
-
-      if (files.length === 1 && page > 1) {
-        setPage((current) => current - 1);
+      if (!result.success) {
+        toast.error(result.message || "Failed to delete file.");
       } else {
-        refetch();
+        toast.success(result.message || "File deleted successfully.");
       }
     } catch (error) {
       toast.error(

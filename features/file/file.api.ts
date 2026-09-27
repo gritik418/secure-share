@@ -2,6 +2,7 @@ import baseApi from "@/store/api/base-api";
 import {
   AddFileMemberDto,
   AddFileMemberResponse,
+  DeleteFileResponse,
   GetFilesDto,
   GetMyFilesResponse,
 } from "./file.interface";
@@ -23,7 +24,7 @@ const fileApi = baseApi.injectEndpoints({
           params,
         };
       },
-      providesTags: ["FileMember"],
+      providesTags: ["File"],
     }),
     addFileMember: builder.mutation<AddFileMemberResponse, AddFileMemberDto>({
       query: ({ fileId, email }: AddFileMemberDto) => ({
@@ -31,9 +32,20 @@ const fileApi = baseApi.injectEndpoints({
         method: "POST",
         body: { email },
       }),
-      invalidatesTags: ["FileMember"],
+      invalidatesTags: ["File"],
+    }),
+    deleteFile: builder.mutation<DeleteFileResponse, string>({
+      query: (fileId: string) => ({
+        url: `/file/${fileId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["File"],
     }),
   }),
 });
 
-export const { useGetMyFilesQuery, useAddFileMemberMutation } = fileApi;
+export const {
+  useGetMyFilesQuery,
+  useAddFileMemberMutation,
+  useDeleteFileMutation,
+} = fileApi;

@@ -6,7 +6,7 @@ const baseApi = createApi({
     baseUrl: process.env.NEXT_PUBLIC_API_URL,
     credentials: "include",
   }),
-  tagTypes: ["Auth", "FileMember"],
+  tagTypes: ["Auth", "File"],
   endpoints: () => ({}),
 });
 
