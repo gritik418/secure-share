@@ -16,6 +16,11 @@ export interface User {
   id: string;
   name: string;
   email: string;
+
+  uploadedFilesCount: number;
+  sharedToMeCount: number;
+  sharedByMeCount: number;
+
   updatedAt: string;
   createdAt: string;
 }

@@ -1,4 +1,7 @@
+"use client";
+
 import Navbar from "@/components/Navbar/Navbar";
+import { selectUser } from "@/features/auth/auth.slice";
 import {
   ArrowRight,
   Download,
@@ -6,13 +9,15 @@ import {
   FileArchive,
   FileImage,
   FileText,
-  FolderOpen,
   MoreHorizontal,
   Plus,
   Share2,
   UploadCloud,
   Users,
 } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { useSelector } from "react-redux";
 
 const files = [
   {
@@ -46,6 +51,34 @@ const files = [
 ];
 
 const Home = () => {
+  const user = useSelector(selectUser);
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return "Good morning";
+    }
+
+    if (hour < 18) {
+      return "Good afternoon";
+    }
+
+    return "Good evening";
+  };
+
+  const getDate = () => {
+    return new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   return (
     <>
       <Navbar />
@@ -53,10 +86,12 @@ const Home = () => {
         <div className="mx-auto max-w-360 px-5 py-8 sm:px-8 lg:py-10">
           <section className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
-              <p className="mb-1 text-sm text-muted">Sunday, September 27</p>
+              <p className="mb-1 text-sm text-muted font-semibold">
+                {getDate()}
+              </p>
 
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                Good morning, Ritik
+                {getGreeting()}, {user.name} <span>😊</span>
               </h1>
 
               <p className="mt-2 text-sm text-muted">
@@ -75,7 +110,9 @@ const Home = () => {
                 <span className="text-xs text-muted">Total</span>
               </div>
 
-              <p className="mt-5 text-2xl font-bold">48</p>
+              <p className="mt-5 text-2xl font-bold">
+                {user.uploadedFilesCount}
+              </p>
               <p className="mt-1 text-xs text-muted">Files uploaded</p>
             </div>
 
@@ -88,7 +125,7 @@ const Home = () => {
                 <span className="text-xs text-muted">Active</span>
               </div>
 
-              <p className="mt-5 text-2xl font-bold">16</p>
+              <p className="mt-5 text-2xl font-bold">{user.sharedByMeCount}</p>
               <p className="mt-1 text-xs text-muted">Files shared</p>
             </div>
 
@@ -101,7 +138,7 @@ const Home = () => {
                 <span className="text-xs text-muted">People</span>
               </div>
 
-              <p className="mt-5 text-2xl font-bold">12</p>
+              <p className="mt-5 text-2xl font-bold">{user.sharedToMeCount}</p>
               <p className="mt-1 text-xs text-muted">Files shared with you</p>
             </div>
           </section>
@@ -173,10 +210,13 @@ const Home = () => {
                     Upload a file and choose exactly who can access it.
                   </p>
 
-                  <button className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 py-2.5 text-xs font-semibold text-primary-light transition hover:bg-primary/20">
+                  <Link
+                    href={"/upload"}
+                    className="mt-5 cursor-pointer flex w-full items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/10 py-2.5 text-xs font-semibold text-primary-light transition hover:bg-primary/20"
+                  >
                     <Plus className="h-4 w-4" />
                     Upload new file
-                  </button>
+                  </Link>
                 </div>
               </div>
 
