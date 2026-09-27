@@ -1,22 +1,71 @@
 "use client";
 
 import Logo from "@/components/Logo/Logo";
+import { useRegisterMutation } from "@/features/auth/auth.api";
+import RegisterSchema, {
+  RegisterDto,
+} from "@/features/auth/schemas/register.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowRight,
   Check,
   Eye,
   EyeOff,
   FileLock2,
+  Loader2,
   LockKeyhole,
   Mail,
   User,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
 const Register = () => {
+  const [registerUser] = useRegisterMutation();
+  const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterDto>({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      passwordConfirmation: "",
+    },
+    resolver: zodResolver(RegisterSchema),
+  });
+
+  const handleRegister = async (data: RegisterDto) => {
+    try {
+      const result = await registerUser(data).unwrap();
+
+      if (!result.success) {
+        toast.error(result.message);
+      } else {
+        toast.success(result.message || "Account created successfully.");
+
+        router.push("/login");
+      }
+    } catch (error: any) {
+      if (error.status === "FETCH_ERROR") {
+        toast.error(
+          "Unable to connect to the server. Please make sure the server is running.",
+        );
+        return;
+      }
+
+      toast.error(error?.data?.message || "Something went wrong.");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-background text-text">
@@ -116,7 +165,7 @@ const Register = () => {
               </p>
             </div>
 
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit(handleRegister)} className="space-y-4">
               <div>
                 <label
                   htmlFor="name"
@@ -129,11 +178,17 @@ const Register = () => {
                   <User className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted transition group-focus-within:text-primary-light" />
 
                   <input
+                    {...register("name")}
                     id="name"
                     type="text"
                     placeholder="Your name"
                     className="h-13 w-full rounded-xl border border-border bg-surface pl-11 pr-4 text-sm outline-none transition placeholder:text-muted/60 hover:border-white/15 focus:border-primary/60 focus:bg-surface-2 focus:ring-4 focus:ring-primary/10"
                   />
+                  {errors.name && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.name.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -151,9 +206,15 @@ const Register = () => {
                   <input
                     id="email"
                     type="email"
+                    {...register("email")}
                     placeholder="you@example.com"
                     className="h-13 w-full rounded-xl border border-border bg-surface pl-11 pr-4 text-sm outline-none transition placeholder:text-muted/60 hover:border-white/15 focus:border-primary/60 focus:bg-surface-2 focus:ring-4 focus:ring-primary/10"
                   />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -169,6 +230,7 @@ const Register = () => {
                   <LockKeyhole className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted transition group-focus-within:text-primary-light" />
 
                   <input
+                    {...register("password")}
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Create a password"
@@ -187,6 +249,11 @@ const Register = () => {
                     )}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -201,6 +268,7 @@ const Register = () => {
                   <LockKeyhole className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted transition group-focus-within:text-primary-light" />
 
                   <input
+                    {...register("passwordConfirmation")}
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm your password"
@@ -219,13 +287,23 @@ const Register = () => {
                     )}
                   </button>
                 </div>
+                {errors.passwordConfirmation && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.passwordConfirmation.message}
+                  </p>
+                )}
               </div>
 
               <button
                 type="submit"
-                className="group flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold shadow-lg shadow-primary/20 transition hover:bg-primary-dark hover:shadow-primary/30 active:scale-[0.99]"
+                disabled={isSubmitting}
+                className="group cursor-pointer flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-primary font-semibold shadow-lg shadow-primary/20 transition hover:bg-primary-dark hover:shadow-primary/30 active:scale-[0.99]"
               >
-                Create account
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Create account"
+                )}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </button>
             </form>

@@ -1,9 +1,16 @@
 import { LoginDto } from "./schemas/login.schema";
+import { RegisterDto } from "./schemas/register.schema";
 
 export interface LoginResponse {
   success: boolean;
   message: string;
   errors?: Partial<LoginDto>;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  errors?: Partial<RegisterDto>;
 }
 
 export interface GetMeResponse {

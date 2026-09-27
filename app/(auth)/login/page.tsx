@@ -46,7 +46,9 @@ const Login = () => {
       } else {
         toast.success(result.message || "Logged in successfully.");
 
-        router.push("/");
+        setTimeout(() => {
+          router.push("/");
+        }, 1000);
       }
     } catch (error: any) {
       if (error.status === "FETCH_ERROR") {

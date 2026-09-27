@@ -189,34 +189,49 @@ const Home = () => {
               </div>
 
               <div className="divide-y divide-border">
-                {myFiles.map((file: FileInterface) => {
-                  const Icon = file.mimeType === "PDF" ? FileText : FileImage;
-
-                  return (
-                    <div
-                      key={file.id}
-                      className="group flex items-center gap-4 px-5 py-4 transition hover:bg-white/2.5"
-                    >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                        <Icon className="h-5 w-5 text-primary-light" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {file.originalName}
-                        </p>
-
-                        <p className="mt-1 text-xs text-muted">
-                          {file.mimeType} · {file.size}
-                        </p>
-                      </div>
-
-                      <p className="hidden text-xs text-muted md:block">
-                        {formatDate(file.createdAt)}
-                      </p>
+                {myFiles.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center px-5 py-14 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                      <FileText className="h-7 w-7 text-primary-light" />
                     </div>
-                  );
-                })}
+
+                    <h3 className="mt-4 text-sm font-semibold">No files yet</h3>
+
+                    <p className="mt-1 max-w-sm text-xs text-muted">
+                      You haven&apos;t uploaded any files yet. Upload a file to
+                      see it here.
+                    </p>
+                  </div>
+                ) : (
+                  myFiles.map((file: FileInterface) => {
+                    const Icon = file.mimeType === "PDF" ? FileText : FileImage;
+
+                    return (
+                      <div
+                        key={file.id}
+                        className="group flex items-center gap-4 px-5 py-4 transition hover:bg-white/2.5"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                          <Icon className="h-5 w-5 text-primary-light" />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {file.originalName}
+                          </p>
+
+                          <p className="mt-1 text-xs text-muted">
+                            {file.mimeType} · {file.size}
+                          </p>
+                        </div>
+
+                        <p className="hidden text-xs text-muted md:block">
+                          {formatDate(file.createdAt)}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
