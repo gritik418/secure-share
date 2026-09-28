@@ -5,6 +5,7 @@ import {
   DeleteFileResponse,
   GetFilesDto,
   GetMyFilesResponse,
+  GetReceivedFilesResponse,
   RemoveFileMemberDto,
   RemoveFileMemberResponse,
 } from "./file.interface";
@@ -24,6 +25,15 @@ const fileApi = baseApi.injectEndpoints({
           url: "/file",
           method: "GET",
           params,
+        };
+      },
+      providesTags: ["File"],
+    }),
+    getReceivedFiles: builder.query<GetReceivedFilesResponse, void>({
+      query: () => {
+        return {
+          url: "/file/received",
+          method: "GET",
         };
       },
       providesTags: ["File"],
@@ -62,4 +72,5 @@ export const {
   useAddFileMemberMutation,
   useDeleteFileMutation,
   useRemoveFileMemberMutation,
+  useGetReceivedFilesQuery,
 } = fileApi;

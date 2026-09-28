@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, FileLock2, FolderOpen, Home } from "lucide-react";
+import { ArrowLeft, FileLock2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 

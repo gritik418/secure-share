@@ -25,7 +25,7 @@ const Navbar = () => {
       icon: File,
     },
     {
-      href: "/shared",
+      href: "/shared-with-me",
       label: "Shared with me",
       icon: FolderOpen,
     },

@@ -58,6 +58,32 @@ export interface MyFileInterface {
   }[];
 }
 
+export interface GetReceivedFilesResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    files: ReceivedFileInterface[];
+  };
+}
+
+export interface ReceivedFileInterface {
+  id: string;
+  originalName: string;
+  size: number;
+  mimeType: string;
+  storagePath: string;
+  visibility: FileVisibility;
+  accessLink: string;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
+  owner: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export interface DeleteFileResponse {
   success: boolean;
   message: string;

@@ -1,4 +1,4 @@
-import { ChevronDown, LogOut, User } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 import React from "react";
 
 interface ProfileMenuProps {
@@ -37,13 +37,6 @@ const ProfileMenu = ({ name, email, initials }: ProfileMenuProps) => {
           <div className="border-b border-border px-3 py-2.5">
             <p className="text-sm font-medium">{name}</p>
             <p className="truncate text-xs text-muted">{email}</p>
-          </div>
-
-          <div className="py-1">
-            <button className="flex cursor-pointer w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-white/5 hover:text-white">
-              <User className="h-4 w-4" />
-              Profile
-            </button>
           </div>
 
           <div className="border-t border-border pt-1">
