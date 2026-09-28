@@ -8,37 +8,40 @@ import React, { useEffect } from "react";
 const PUBLIC_ROUTES = ["/login", "/register"];
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-  const { data, isLoading, isFetching, isError } = useGetMeQuery();
-
   const router = useRouter();
   const pathname = usePathname();
 
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+
+  const { data, isLoading, isFetching, isError } = useGetMeQuery(undefined, {
+    skip: isPublicRoute,
+  });
+
   const isAuthenticated = Boolean(data?.success && data?.data);
 
   useEffect(() => {
-    if (isLoading || isFetching) return;
-
     if (isPublicRoute) {
-      if (isAuthenticated) {
+      if (!isLoading && !isFetching && isAuthenticated) {
         router.replace("/");
       }
 
       return;
     }
 
+    if (isLoading || isFetching) return;
+
     if (isError || !isAuthenticated) {
       router.replace("/login");
     }
-  }, [
-    data,
-    isLoading,
-    isFetching,
-    isError,
-    isPublicRoute,
-    isAuthenticated,
-    router,
-  ]);
+  }, [isPublicRoute, isLoading, isFetching, isAuthenticated, isError, router]);
+
+  if (isPublicRoute) {
+    if (isAuthenticated) {
+      return null;
+    }
+
+    return <>{children}</>;
+  }
 
   if (isLoading || isFetching) {
     return (
@@ -48,11 +51,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (isPublicRoute && isAuthenticated) {
-    return null;
-  }
-
-  if (!isPublicRoute && (isError || !isAuthenticated)) {
+  if (isError || !isAuthenticated) {
     return null;
   }
 

@@ -31,3 +31,8 @@ export interface User {
   updatedAt: string;
   createdAt: string;
 }
+
+export interface LogoutResponse {
+  success: boolean;
+  message: string;
+}

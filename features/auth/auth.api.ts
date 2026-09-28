@@ -2,6 +2,7 @@ import baseApi from "@/store/api/base-api";
 import {
   GetMeResponse,
   LoginResponse,
+  LogoutResponse,
   RegisterResponse,
 } from "./auth.interface";
 import { LoginDto } from "./schemas/login.schema";
@@ -17,6 +18,13 @@ const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Auth"],
     }),
+    logout: builder.mutation<LogoutResponse, void>({
+      query: () => ({
+        url: "/auth/logout",
+        method: "POST",
+      }),
+      invalidatesTags: ["Auth"],
+    }),
     register: builder.mutation<RegisterResponse, RegisterDto>({
       query: (data: RegisterDto) => ({
         url: "/auth/register",
@@ -29,11 +37,16 @@ const authApi = baseApi.injectEndpoints({
         url: "/auth/me",
         method: "GET",
       }),
-      providesTags: ["Auth"],
+      providesTags: ["Auth", "File"],
     }),
   }),
 });
 
-export const { useLoginMutation, useGetMeQuery, useRegisterMutation } = authApi;
+export const {
+  useLoginMutation,
+  useGetMeQuery,
+  useRegisterMutation,
+  useLogoutMutation,
+} = authApi;
 
 export default authApi;

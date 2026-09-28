@@ -1,5 +1,11 @@
+import { useLogoutMutation } from "@/features/auth/auth.api";
+import { AppDispatch } from "@/store";
+import baseApi from "@/store/api/base-api";
 import { ChevronDown, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
 
 interface ProfileMenuProps {
   name: string;
@@ -8,7 +14,27 @@ interface ProfileMenuProps {
 }
 
 const ProfileMenu = ({ name, email, initials }: ProfileMenuProps) => {
+  const [logout] = useLogoutMutation();
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const [open, setOpen] = React.useState(false);
+
+  const handleLogout = async () => {
+    try {
+      const result = await logout().unwrap();
+
+      if (!result.success) {
+        toast.error(result.message || "Failed to logout.");
+      } else {
+        toast.success(result.message || "Logged out successfully.");
+
+        dispatch(baseApi.util.resetApiState());
+        router.push("/login");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to logout.");
+    }
+  };
 
   return (
     <div className="relative ml-1">
@@ -40,7 +66,10 @@ const ProfileMenu = ({ name, email, initials }: ProfileMenuProps) => {
           </div>
 
           <div className="border-t border-border pt-1">
-            <button className="flex cursor-pointer w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-400 transition hover:bg-red-500/10">
+            <button
+              onClick={handleLogout}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-400 transition hover:bg-red-500/10"
+            >
               <LogOut className="h-4 w-4" />
               Sign out
             </button>

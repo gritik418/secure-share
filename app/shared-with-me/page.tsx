@@ -37,25 +37,21 @@ const SharedWithMePage = () => {
     <>
       <Navbar />
 
-      <div className="min-h-screen bg-[#080b10] mt-8 px-4 py-6 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
+      <div className="min-h-screen bg-[#080b10]px-4 py-6 text-white sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-360 px-5 py-8 sm:px-8 lg:py-10">
           <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
             <div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-primary/10">
-                  <Share2 className="h-5 w-5 text-primary-light" />
-                </div>
+              <p className="mb-2 text-sm font-semibold text-primary-light">
+                Shared files
+              </p>
 
-                <div>
-                  <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-                    Shared with Me
-                  </h1>
+              <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                Shared with Me
+              </h1>
 
-                  <p className="mt-1 text-sm text-muted">
-                    Files that other people have shared with you
-                  </p>
-                </div>
-              </div>
+              <p className="mt-2 text-sm text-muted">
+                Files that other people have shared with you.
+              </p>
             </div>
           </div>
 

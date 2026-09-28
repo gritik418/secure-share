@@ -95,11 +95,11 @@ const MyFilesPage = () => {
     <>
       <Navbar />
 
-      <main className="min-h-[calc(100vh-4rem)] bg-background">
+      <main className="min-h-screen bg-[#080b10]px-4 py-6 text-white sm:px-6 lg:px-8">
         <div className="mx-auto max-w-360 px-5 py-8 sm:px-8 lg:py-10">
           <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="mb-2 text-sm font-medium text-primary-light">
+              <p className="mb-2 text-sm font-semibold text-primary-light">
                 File management
               </p>
 

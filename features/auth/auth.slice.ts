@@ -21,6 +21,8 @@ const authSlice = createSlice({
       (state, action) => {
         if (action.payload.success && action.payload.data) {
           state.user = action.payload.data.user;
+        } else {
+          state.user = null;
         }
       },
     );

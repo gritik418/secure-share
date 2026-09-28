@@ -74,3 +74,5 @@ export const {
   useRemoveFileMemberMutation,
   useGetReceivedFilesQuery,
 } = fileApi;
+
+export default fileApi;

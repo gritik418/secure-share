@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar/Navbar";
 import { selectUser } from "@/features/auth/auth.slice";
 import { useGetMyFilesQuery } from "@/features/file/file.api";
 import { type MyFileInterface } from "@/features/file/file.interface";
-import { formatDate } from "@/lib/utils/file.utils";
+import { formatDate, formatFileSize } from "@/lib/utils/file.utils";
 import {
   ArrowRight,
   Download,
@@ -25,6 +25,7 @@ import { useSelector } from "react-redux";
 const Home = () => {
   const user = useSelector(selectUser);
   const [myFiles, setMyFiles] = useState<MyFileInterface[]>([]);
+
   const { data, isLoading } = useGetMyFilesQuery({
     limit: 5,
     page: 1,
@@ -182,7 +183,8 @@ const Home = () => {
                           </p>
 
                           <p className="mt-1 text-xs text-muted">
-                            {file.mimeType} · {file.size}
+                            {file.mimeType} ·{" "}
+                            {formatFileSize(file.size.toString())}
                           </p>
                         </div>
 
