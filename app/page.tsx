@@ -2,9 +2,19 @@
 
 import Navbar from "@/components/Navbar/Navbar";
 import { selectUser } from "@/features/auth/auth.slice";
-import { useGetMyFilesQuery } from "@/features/file/file.api";
-import { type MyFileInterface } from "@/features/file/file.interface";
-import { formatDate, formatFileSize } from "@/lib/utils/file.utils";
+import {
+  useGetMyFilesQuery,
+  useGetReceivedFilesQuery,
+} from "@/features/file/file.api";
+import {
+  ReceivedFileInterface,
+  type MyFileInterface,
+} from "@/features/file/file.interface";
+import {
+  formatDate,
+  formatFileSize,
+  getFileIcon,
+} from "@/lib/utils/file.utils";
 import {
   ArrowRight,
   Download,
@@ -12,6 +22,8 @@ import {
   FileArchive,
   FileImage,
   FileText,
+  FolderOpen,
+  Loader2,
   Plus,
   Share2,
   UploadCloud,
@@ -21,15 +33,26 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 const Home = () => {
   const user = useSelector(selectUser);
   const [myFiles, setMyFiles] = useState<MyFileInterface[]>([]);
+  const [receivedFiles, setReceivedFiles] = useState<ReceivedFileInterface[]>(
+    [],
+  );
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const { data, isLoading } = useGetMyFilesQuery({
     limit: 5,
     page: 1,
   });
+
+  const { data: receivedData, isLoading: receivedIsLoading } =
+    useGetReceivedFilesQuery({
+      limit: 3,
+      page: 1,
+    });
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -53,6 +76,44 @@ const Home = () => {
     });
   };
 
+  const handleDownload = async (fileId: string, originalName: string) => {
+    try {
+      setDownloadingId(fileId);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/file/${fileId}/view`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+
+        throw new Error(error?.message || "Failed to download file.");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = originalName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to download file.",
+      );
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   useEffect(() => {
     if (isLoading) {
       return;
@@ -62,6 +123,16 @@ const Home = () => {
       setMyFiles(data.data.files);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (receivedIsLoading) {
+      return;
+    }
+
+    if (receivedData?.success && receivedData?.data) {
+      setReceivedFiles(receivedData?.data?.files);
+    }
+  }, [receivedData]);
 
   if (!user) {
     redirect("/login");
@@ -234,46 +305,78 @@ const Home = () => {
                 </div>
 
                 <div className="mt-5 space-y-4">
-                  {[
-                    {
-                      name: "Design Assets.zip",
-                      from: "Aman Sharma",
-                      icon: FileArchive,
-                    },
-                    {
-                      name: "Project Brief.pdf",
-                      from: "Sarah Khan",
-                      icon: FileText,
-                    },
-                    {
-                      name: "Hero Image.png",
-                      from: "Dev Team",
-                      icon: FileImage,
-                    },
-                  ].map((file) => {
-                    const Icon = file.icon;
+                  {receivedIsLoading ? (
+                    Array.from({ length: 3 }).map((_, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className="h-9 w-9 shrink-0 animate-pulse rounded-lg bg-white/5" />
 
-                    return (
-                      <div key={file.name} className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/4">
-                          <Icon className="h-4 w-4 text-muted" />
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <div className="h-3 w-32 animate-pulse rounded bg-white/5" />
+                          <div className="h-2.5 w-24 animate-pulse rounded bg-white/5" />
                         </div>
 
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-medium">
-                            {file.name}
-                          </p>
-                          <p className="mt-1 text-[10px] text-muted">
-                            Shared by {file.from}
-                          </p>
-                        </div>
-
-                        <button className="text-muted transition hover:text-primary-light">
-                          <Download className="h-4 w-4" />
-                        </button>
+                        <div className="h-4 w-4 animate-pulse rounded bg-white/5" />
                       </div>
-                    );
-                  })}
+                    ))
+                  ) : receivedFiles.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/4">
+                        <FolderOpen className="h-4 w-4 text-muted" />
+                      </div>
+
+                      <p className="mt-3 text-xs font-medium text-white">
+                        No files shared with you
+                      </p>
+
+                      <p className="mt-1 text-[10px] text-muted">
+                        Files shared with you will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    receivedFiles.map((file: ReceivedFileInterface) => {
+                      const Icon = getFileIcon(file.mimeType);
+                      const isDownloading = downloadingId === file.id;
+
+                      return (
+                        <div key={file.id} className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/4">
+                            <Icon className="h-4 w-4 text-muted" />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <p
+                              className="truncate text-xs font-medium"
+                              title={file.originalName}
+                            >
+                              {file.originalName}
+                            </p>
+
+                            <p
+                              className="mt-1 truncate text-[10px] text-muted"
+                              title={file.owner.email}
+                            >
+                              Shared by {file.owner.name}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            disabled={isDownloading}
+                            onClick={() =>
+                              handleDownload(file.id, file.originalName)
+                            }
+                            className="shrink-0 cursor-pointer text-muted transition hover:text-primary-light disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isDownloading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             </aside>
