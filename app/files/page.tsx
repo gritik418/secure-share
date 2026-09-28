@@ -125,7 +125,7 @@ const MyFilesPage = () => {
               />
             </div>
 
-            <div className="flex overflow-x-auto rounded-xl border border-border bg-surface p-1">
+            <div className="flex overflow-x-auto w-max rounded-xl border border-border bg-surface p-1">
               <button
                 onClick={() => handleVisibilityChange("ALL")}
                 className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${

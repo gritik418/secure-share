@@ -42,6 +42,12 @@ export interface GetFilesDto {
   visibility?: FileVisibility;
 }
 
+export interface GetReceivedFilesDto {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
 export interface MyFileInterface {
   id: string;
   originalName: string;
@@ -63,6 +69,14 @@ export interface GetReceivedFilesResponse {
   message: string;
   data?: {
     files: ReceivedFileInterface[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
+    };
   };
 }
 

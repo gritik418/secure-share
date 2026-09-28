@@ -5,6 +5,7 @@ import {
   DeleteFileResponse,
   GetFilesDto,
   GetMyFilesResponse,
+  GetReceivedFilesDto,
   GetReceivedFilesResponse,
   RemoveFileMemberDto,
   RemoveFileMemberResponse,
@@ -29,11 +30,21 @@ const fileApi = baseApi.injectEndpoints({
       },
       providesTags: ["File"],
     }),
-    getReceivedFiles: builder.query<GetReceivedFilesResponse, void>({
-      query: () => {
+    getReceivedFiles: builder.query<
+      GetReceivedFilesResponse,
+      GetReceivedFilesDto
+    >({
+      query: ({ page, limit, search }: GetReceivedFilesDto) => {
+        const params: Record<string, string> = {};
+
+        if (page) params.page = page.toString();
+        if (limit) params.limit = limit.toString();
+        if (search) params.search = search;
+
         return {
           url: "/file/received",
           method: "GET",
+          params,
         };
       },
       providesTags: ["File"],

@@ -2,44 +2,142 @@
 
 import Navbar from "@/components/Navbar/Navbar";
 import { useGetReceivedFilesQuery } from "@/features/file/file.api";
-import { ReceivedFileInterface } from "@/features/file/file.interface";
 import {
   formatDate,
   formatFileSize,
   getFileIcon,
 } from "@/lib/utils/file.utils";
-import { ArrowDownToLine, Eye, FolderOpen, Search, Share2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Eye,
+  File,
+  Loader2,
+  Search,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 const SharedWithMePage = () => {
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [files, setFiles] = useState<ReceivedFileInterface[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const { data, isLoading } = useGetReceivedFilesQuery();
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const filteredFiles = useMemo(() => {
-    if (!search.trim()) return files;
-
-    return files.filter((file) =>
-      file.originalName.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [files, search]);
+  const limit = 5;
 
   useEffect(() => {
-    if (isLoading) return;
+    const timeout = setTimeout(() => {
+      setPage(1);
+      setSearchQuery(search.trim());
+    }, 400);
 
-    if (data) {
-      setFiles(data?.data?.files || []);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  const { data, isLoading, isFetching } = useGetReceivedFilesQuery({
+    limit,
+    page,
+    search: searchQuery,
+  });
+
+  const files = data?.data?.files || [];
+  const pagination = data?.data?.pagination;
+
+  const showLoading = isLoading || isFetching;
+
+  const handleView = async (fileId: string) => {
+    const newTab = window.open("", "_blank");
+
+    if (!newTab) {
+      toast.error("Please allow popups to view the file.");
+      return;
     }
-  }, [data, isLoading]);
+
+    try {
+      setViewingId(fileId);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/file/${fileId}/view`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+
+        throw new Error(error?.message || "Failed to open file.");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      newTab.location.href = url;
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 60000);
+    } catch (error) {
+      newTab.close();
+
+      toast.error(
+        error instanceof Error ? error.message : "Failed to open file.",
+      );
+    } finally {
+      setViewingId(null);
+    }
+  };
+
+  const handleDownload = async (fileId: string, originalName: string) => {
+    try {
+      setDownloadingId(fileId);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/file/${fileId}/view`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+
+        throw new Error(error?.message || "Failed to download file.");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = originalName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to download file.",
+      );
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   return (
     <>
       <Navbar />
 
-      <div className="min-h-screen bg-[#080b10]px-4 py-6 text-white sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-[#080b10] px-4 py-6 text-white sm:px-6 lg:px-8">
         <div className="mx-auto max-w-360 px-5 py-8 sm:px-8 lg:py-10">
-          <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+          <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="mb-2 text-sm font-semibold text-primary-light">
                 Shared files
@@ -55,78 +153,85 @@ const SharedWithMePage = () => {
             </div>
           </div>
 
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+          <div className="mb-5">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
 
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search shared files..."
-                className="h-11 w-full rounded-xl border border-border bg-[#0d1117] pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-muted focus:border-primary/50"
+                className="h-11 w-full rounded-xl border border-border bg-surface pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-muted focus:border-primary/60 focus:ring-2 focus:ring-primary/10"
               />
             </div>
           </div>
 
-          {isLoading ? (
-            <div className="overflow-hidden rounded-2xl border border-border bg-[#0d1117]/80">
-              <div className="hidden grid-cols-[minmax(0,1fr)_minmax(180px,240px)_140px_88px] items-center gap-6 border-b border-border px-5 py-3 text-xs font-medium text-muted sm:grid">
-                <span>File</span>
-                <span>Shared by</span>
-                <span>Date</span>
-                <span className="text-right">Actions</span>
-              </div>
+          <div className="overflow-hidden rounded-2xl border border-border bg-surface/70">
+            <div className="hidden border-b border-border px-5 py-3.5 text-xs font-medium uppercase tracking-wider text-muted md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_120px_96px] md:items-center">
+              <span>File</span>
+              <span>Shared by</span>
+              <span>Uploaded</span>
+              <span className="text-right">Actions</span>
+            </div>
 
-              <div className="divide-y divide-border">
-                {[1, 2, 3, 4].map((item) => (
+            {showLoading ? (
+              <div>
+                {Array.from({ length: 6 }).map((_, index) => (
                   <div
-                    key={item}
-                    className="grid gap-4 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_minmax(180px,240px)_140px_88px] sm:items-center sm:gap-6 sm:px-5"
+                    key={index}
+                    className="grid grid-cols-1 gap-3 border-b border-border px-5 py-4 last:border-0 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_120px_96px] md:items-center md:gap-0"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-white/5" />
+                    <div className="flex items-center gap-4">
+                      <div className="h-11 w-11 shrink-0 animate-pulse rounded-xl bg-white/5" />
 
                       <div className="min-w-0 flex-1 space-y-2">
-                        <div className="h-3.5 w-40 animate-pulse rounded bg-white/5" />
-                        <div className="h-3 w-16 animate-pulse rounded bg-white/5" />
+                        <div className="h-4 w-1/3 animate-pulse rounded bg-white/5" />
+                        <div className="h-3 w-1/4 animate-pulse rounded bg-white/5" />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <div className="h-3.5 w-28 animate-pulse rounded bg-white/5" />
+                    <div className="hidden space-y-2 md:block">
+                      <div className="h-4 w-28 animate-pulse rounded bg-white/5" />
                       <div className="h-3 w-36 animate-pulse rounded bg-white/5" />
                     </div>
 
-                    <div className="h-3 w-20 animate-pulse rounded bg-white/5" />
+                    <div className="hidden h-4 w-20 animate-pulse rounded bg-white/5 md:block" />
 
-                    <div className="flex justify-end gap-1">
-                      <div className="h-8 w-8 animate-pulse rounded-lg bg-white/5" />
-                      <div className="h-8 w-8 animate-pulse rounded-lg bg-white/5" />
-                    </div>
+                    <div className="hidden h-9 w-20 animate-pulse rounded bg-white/5 md:block" />
                   </div>
                 ))}
               </div>
-            </div>
-          ) : filteredFiles.length > 0 ? (
-            <div className="overflow-hidden rounded-2xl border border-border bg-[#0d1117]/80">
-              <div className="hidden grid-cols-[minmax(0,1fr)_minmax(180px,240px)_140px_88px] items-center gap-6 border-b border-border px-5 py-3 text-xs font-medium text-muted sm:grid">
-                <span>File</span>
-                <span>Shared by</span>
-                <span>Date</span>
-                <span className="text-right">Actions</span>
-              </div>
+            ) : files.length === 0 ? (
+              <div className="flex min-h-80 flex-col items-center justify-center px-6 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-white/5">
+                  <File className="h-6 w-6 text-muted" />
+                </div>
 
+                <h3 className="text-sm font-semibold text-white">
+                  {searchQuery ? "No files found" : "No shared files yet"}
+                </h3>
+
+                <p className="mt-1.5 max-w-sm text-sm text-muted">
+                  {searchQuery
+                    ? "Try changing your search."
+                    : "Files shared with you will appear here."}
+                </p>
+              </div>
+            ) : (
               <div className="divide-y divide-border">
-                {filteredFiles.map((file) => {
+                {files.map((file) => {
                   const Icon = getFileIcon(file.mimeType);
+
+                  const isViewing = viewingId === file.id;
+                  const isDownloading = downloadingId === file.id;
 
                   return (
                     <div
                       key={file.id}
-                      className="grid gap-4 px-4 py-4 transition hover:bg-white/2 sm:grid-cols-[minmax(0,1fr)_minmax(180px,240px)_140px_88px] sm:items-center sm:gap-6 sm:px-5"
+                      className="grid grid-cols-1 gap-3 px-5 py-4 transition hover:bg-white/2 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_120px_96px] md:items-center md:gap-0"
                     >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/10">
+                      <div className="flex min-w-0 items-center gap-4">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/10">
                           <Icon className="h-5 w-5 text-primary-light" />
                         </div>
 
@@ -144,7 +249,7 @@ const SharedWithMePage = () => {
                         </div>
                       </div>
 
-                      <div className="min-w-0 pl-13 sm:pl-0">
+                      <div className="min-w-0 md:pr-4">
                         <p
                           className="truncate text-sm font-medium text-white"
                           title={file.owner.name}
@@ -160,57 +265,108 @@ const SharedWithMePage = () => {
                         </p>
                       </div>
 
-                      <div className="pl-13 sm:pl-0">
-                        <p className="text-xs text-muted">
+                      <div>
+                        <p className="text-sm text-muted">
                           {formatDate(file.createdAt)}
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-start gap-1 pl-13 sm:justify-end sm:pl-0">
+                      <div className="flex items-center justify-start gap-1 md:justify-end">
                         <button
                           type="button"
-                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white"
+                          onClick={() => handleView(file.id)}
+                          disabled={isViewing || isDownloading}
                           title="View file"
+                          className="flex h-9 w-9 items-center cursor-pointer justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <Eye className="h-4 w-4" />
+                          {isViewing ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
                         </button>
 
                         <button
                           type="button"
-                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white"
-                          title="Download"
+                          onClick={() =>
+                            handleDownload(file.id, file.originalName)
+                          }
+                          disabled={isViewing || isDownloading}
+                          title="Download file"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <ArrowDownToLine className="h-4 w-4" />
+                          {isDownloading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          ) : (
-            <div className="flex min-h-105 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-[#0d1117]/50 px-6 text-center">
-              <div className="relative mb-6">
-                <div className="absolute inset-0 rounded-3xl bg-primary/10 blur-2xl" />
+            )}
 
-                <div className="relative flex h-20 w-20 items-center justify-center rounded-3xl border border-border bg-[#0d1117]">
-                  <FolderOpen className="h-8 w-8 text-primary-light" />
+            {!showLoading && pagination && pagination.total > 0 && (
+              <div className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted">
+                  Showing{" "}
+                  <span className="font-medium text-white">
+                    {(pagination.page - 1) * pagination.limit + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-medium text-white">
+                    {Math.min(
+                      pagination.page * pagination.limit,
+                      pagination.total,
+                    )}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium text-white">
+                    {pagination.total}
+                  </span>{" "}
+                  files
+                </p>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((current) => current - 1)}
+                    disabled={
+                      !pagination.hasPreviousPage ||
+                      isFetching ||
+                      !!viewingId ||
+                      !!downloadingId
+                    }
+                    className="flex h-9 items-center gap-1 rounded-lg border border-border px-3 text-sm font-medium text-muted transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </button>
+
+                  <span className="flex h-9 min-w-9 items-center justify-center rounded-lg bg-white/5 px-3 text-sm font-medium text-white">
+                    {pagination.page}
+                  </span>
+
+                  <button
+                    onClick={() => setPage((current) => current + 1)}
+                    disabled={
+                      !pagination.hasNextPage ||
+                      isFetching ||
+                      !!viewingId ||
+                      !!downloadingId
+                    }
+                    className="flex h-9 items-center gap-1 rounded-lg border border-border px-3 text-sm font-medium text-muted transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
-
-              <h2 className="text-lg font-semibold text-white">
-                {search ? "No files found" : "Nothing shared yet"}
-              </h2>
-
-              <p className="mt-2 max-w-sm text-sm leading-6 text-muted">
-                {search
-                  ? "Try searching with a different file name."
-                  : "Files that other people share with you will appear here."}
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      </main>
     </>
   );
 };
